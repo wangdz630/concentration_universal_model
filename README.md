@@ -21,7 +21,7 @@ This code primarily serves two purposes:
 -  `formation_and_structure.py` - Calculates the halo formation redshift and concentration based on the dark halo mass accretion history and structure model.
 -  `README.md` - Documentation
 -  `input_masses.dat` - The required dataset of halo virial mass ($M_{vir}$).
--  `output_rms.dat` - The dataset of the rms fluctuation of the linear density field of halo.
+-  `output_variance.dat` - The dataset of the rms fluctuation of the linear density field of halo.
 -  `halo_properties_z_cosmology.dat` - The dataset of the halo properties, in which contain $M_{vir}$, $\sigma(M)$, $D(z)$, $D(z_\mathrm{f})$ and concentration ($c_{vir}$)
 
 **Note:​**​ Cosmology: LCDM, SCDM, OCDM, EdS, LWDM, wCDM.
