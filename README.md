@@ -7,7 +7,7 @@
 
 This code primarily serves two purposes:
 
-1. To compute the linear growth factor ($D(z)$) , the root-mean-square (rms) fluctuation ($\sigma(M)$) of the linear density field for a halo of a given mass at z=0 under cosmological model.
+1. To compute the linear growth factor $(D(z))$ , the root-mean-square (rms) fluctuation $(\sigma(M))$ of the linear density field for a halo of a given mass at z=0 under cosmological model.
 
 2. To compute the linear growth factor $D(z_\mathrm{f,peak})$ at the halo formation epoch $z_\mathrm{f,peak}$, defined as the redshift when a halo reaches half of its final mass at redshift z, we use a universal fitting formula for $D(z_\mathrm{f,peak})$. This allows us to predict the concentration of dark matter halos of arbitrary mass, at any redshift, and for any cosmology. Our universal halo concentration model combines the linear growth factor with the rms fluctuation of the linear density field obtained in the first step. In addition, the halo formation epoch can be derived from either a semi-analytical model or an alternative fitting formula for the halo mass accretion history (MAH).
 
