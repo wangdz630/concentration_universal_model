@@ -15,13 +15,12 @@ def load_masses(filename):
     
 def save_results(results, redshift, cosmology, filename="output_variance.dat"):
     """Save results to file with mixed formatting"""
-    # 创建包含红移的列
     n_halos = len(results['Mvir'])
     redshifts_column = np.full(n_halos, redshift)
     
     output_data = np.column_stack([
         results['Mvir'], 
-        redshifts_column,  # 添加红移列
+        redshifts_column, 
         results['D_z'], 
         results['sigma_M'], 
         results['sigma_M_f'], 
