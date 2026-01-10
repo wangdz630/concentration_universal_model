@@ -8,11 +8,11 @@ All parameters are defined at the present epoch (z=0) unless otherwise specified
 
 cosmology_configs = {
     'LCDM': {
-        'h': 0.6777,
-        'omega_m': 0.307,
-        'omega_b': 0.048,
-        'n': 0.96,
-        'sigma_8': 0.823,
+        'h': 0.6766,
+        'omega_m': 0.3111,
+        'omega_b': 0.0490,
+        'n': 0.9665,
+        'sigma_8': 0.8102,
         'delta_c': 1.686,
         'cosmology_type': 'CDM',
         'w_0': -1.0,
@@ -40,7 +40,7 @@ cosmology_configs = {
         'w_0': -1.0,
         'w_a': 0.0
     },
-    'SF_n2': {
+    'scale-free': {
         'h': 1.0,
         'omega_m': 1.0,
         'omega_b': 0.0,
