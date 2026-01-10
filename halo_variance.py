@@ -15,11 +15,11 @@ def load_masses(filename):
     
 def save_results(results, redshift, cosmology, filename="output_variance.dat"):
     """Save results to file with mixed formatting"""
-    n_halos = len(results['Mvir'])
+    n_halos = len(results['M'])
     redshifts_column = np.full(n_halos, redshift)
     
     output_data = np.column_stack([
-        results['Mvir'], 
+        results['M'], 
         redshifts_column, 
         results['D_z'], 
         results['sigma_M'], 
@@ -31,7 +31,7 @@ def save_results(results, redshift, cosmology, filename="output_variance.dat"):
         filename,
         output_data,
         fmt=['%.6e', '%.2f', '%.6f', '%.6f', '%.6f', '%.6f'],
-        header=f'Mass[M_sun/h] z D(z) sigma(M,0) sigma(0.5M,0) sigma(0.14M,0)',
+        header=f'M[M_sun/h] z D(z) sigma(M,0) sigma(0.5M,0) sigma(0.16M,0)',
         comments='')
     
 # Parse command line arguments
@@ -65,10 +65,10 @@ results = calculator.calculate_variance(masses, redshift)
 
 # Preview results
 print("\nPreview (first 5 halos):")
-print("Mass [M_sun/h]   z    D(z)  sigma(M,0)  sigma(0.5M,0) sigma(0.14M,0)")
+print("M [M_sun/h]   z    D(z)  sigma(M,0)  sigma(0.5M,0) sigma(0.16M,0)")
 print("-" * 50)
 for i in range(min(5, len(masses))):
-    print(f"{results['Mvir'][i]:12.2e}  {redshift} {results['D_z'][i]:8.4f}  "
+    print(f"{results['M'][i]:12.2e}  {redshift} {results['D_z'][i]:8.4f}  "
           f"{results['sigma_M'][i]:8.4f}  {results['sigma_M_f'][i]:8.4f} "
           f"{results['sigma_M_f2'][i]:8.4f}")
 # Save full results
