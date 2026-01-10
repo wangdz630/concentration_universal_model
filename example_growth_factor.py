@@ -13,7 +13,6 @@ def D_z(cosmo_name, z):
     if isinstance(z, (list, tuple, np.ndarray)):
         return np.array([D_z(cosmo_name, zi) for zi in z])
 
-    # Scalar input: single redshift calculation
     D, _ = linear_growth(
         z, 
         h=cosmo['h'],
