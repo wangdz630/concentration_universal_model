@@ -40,10 +40,9 @@ class HaloMassVarianceCalculator:
         self.R_table = np.logspace(np.log10(self.R_min), np.log10(self.R_max), table_size)   
         self.sigma2_table = None
         self.sigma_table_initialized = False
-        # Store cosmology parameters for radius calculation
         self.rho_c = 3.0e4 / (8.0 * np.pi * 6.67430e-11) * 1.5513826e-2
         self.rho_0 = self.rho_c * self.cosmo['omega_m']
-        # Precompute power spectrum using CAMB
+        # compute power spectrum using CAMB
         self._setup_power_spectrum()
 
     def _calculate_radius_from_mass(self, M):
@@ -70,12 +69,12 @@ class HaloMassVarianceCalculator:
 
     def _setup_power_spectrum(self):
         """Setup power spectrum using CAMB"""
-        # For scale-free cosmologies, we use analytical form
-        if self.cosmo_name in ['SF1_5', 'SF_n2']:
+        params = self.cosmo
+        # For scale-free cosmologies
+        if params['cosmology_type'] == 'EdS':
             self.power_spectrum_func = None
             return   
         # For other cosmologies, use CAMB
-        params = self.cosmo
         # Set up CAMB parameters
         pars = camb.CAMBparams()
         if params['cosmology_type'] in ['CDM', 'OCDM', 'wCDM', 'LWDM']:
@@ -123,8 +122,7 @@ class HaloMassVarianceCalculator:
         """Integrand function for sigma2 calculation"""
         kR = k * R
         window_f = 3.0 * ((np.sin(kR) - kR * np.cos(kR)) / (kR ** 3))
-        if self.cosmo_name in ['SF_n2']:
-            # Scale-free cosmology: P(k) = AA * k^n
+        if self.cosmo['cosmology_type'] == 'EdS':
             return (1.0 / (2.0 * np.pi * np.pi)) * AA * k**(2 + self.cosmo['n']) * window_f**2
         else:
             Pk_val = self.power_spectrum_func(k)
@@ -134,7 +132,7 @@ class HaloMassVarianceCalculator:
         """Precompute sigma2 values for lookup table"""
         print("Precomputing sigma2 lookup table...")
         print(f"Table range: R_min={self.R_min:.4f}, R_max={self.R_max:.4f}, size={self.table_size}")
-        # First, normalize to sigma_8 with AA=1
+        # First, normalize to sigma_8
         AA_temp = 1.0
         s2_8, _ = integrate.quad(self._sigma2_integrand, 0, np.inf, args=(8.0, AA_temp), 
                                 epsabs=1.49e-6, epsrel=1.49e-6, limit=1000)
@@ -168,12 +166,12 @@ class HaloMassVarianceCalculator:
         R_clipped = np.clip(R, self.R_min, self.R_max)
         return self.sigma2_interp(R_clipped)
 
-    def calculate_variance(self, Mvir, redshift, return_all=True):
+    def calculate_variance(self, M, redshift, return_all=True):
         # Convert to array and ensure initialization
-        Mvir = np.asarray(Mvir, dtype=np.float64)
+        M = np.asarray(M, dtype=np.float64)
         # Initialize lookup table if not already done
         if not self.sigma_table_initialized:
-            self.initialize_for_masses(Mvir)
+            self.initialize_for_masses(M)
         # Get linear growth factor
         Dz, _ = linear_growth(
             redshift,
@@ -184,21 +182,21 @@ class HaloMassVarianceCalculator:
             cosmology=self.cosmo['cosmology_type']
         )
         # Initialize arrays for results
-        valid_mask = ~np.isnan(Mvir)
+        valid_mask = ~np.isnan(M)
         results = {
-            'Mvir': Mvir,
-            'D_z': np.full_like(Mvir, np.nan),
-            'sigma_M': np.full_like(Mvir, np.nan),
-            'sigma_M_f': np.full_like(Mvir, np.nan),
-            'sigma_M_f2': np.full_like(Mvir, np.nan),
+            'M': M,
+            'D_z': np.full_like(M, np.nan),
+            'sigma_M': np.full_like(M, np.nan),
+            'sigma_M_f': np.full_like(M, np.nan),
+            'sigma_M_f2': np.full_like(M, np.nan),
         }
         # Calculate for valid masses using vectorized operations
         if np.any(valid_mask):
-            valid_Mvir = Mvir[valid_mask]
+            valid_M = M[valid_mask]
             # Compute radii (vectorized)
-            R = self._calculate_radius_from_mass(valid_Mvir)
-            Rf = self._calculate_radius_from_mass(0.5*valid_Mvir)
-            Rf2 = self._calculate_radius_from_mass(0.14*valid_Mvir)
+            R = self._calculate_radius_from_mass(valid_M)
+            Rf = self._calculate_radius_from_mass(0.5*valid_M)
+            Rf2 = self._calculate_radius_from_mass(0.16*valid_M)
             # Calculate variances using lookup table (vectorized)
             sigma2_M = self.sigma2(R)
             sigma2_M_f = self.sigma2(Rf)
