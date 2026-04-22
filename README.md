@@ -1,40 +1,162 @@
-# Halo Mass Variance Calculator
-# Calculate the linear growth factor
-# Predicting halo formation and structure
+# Halo Concentration Model
 
+A Python package for computing halo mass variance, formation-time proxies, and halo concentration predictions using a universal model calibrated across multiple cosmologies, halo definitions, and concentration statistics.
 
-##  Introduction
+This repository implements a two-step workflow:
 
-This code primarily serves two purposes:
+1. compute halo mass variance from an input halo mass list;
+2. predict halo formation-time quantities and halo concentration using the universal model.
 
-1. To compute the linear growth factor $(D(z))$ , the root-mean-square (rms) fluctuation $(\sigma(M))$ of the linear density field for a halo of a given mass under cosmological model.
+The package supports both standard CDM-like cosmologies and LWDM cosmologies with an analytic half-mode mass correction.
 
-2. To compute the linear growth factor $D(z_\mathrm{f,peak})$ at the halo formation epoch $z_\mathrm{f,peak}$, defined as the redshift when a halo reaches half of its final mass at redshift z, we use a universal fitting formula for $D(z_\mathrm{f,peak})$. This allows us to predict the concentration of dark matter halos of arbitrary mass, at any redshift, and for any cosmology. Our universal halo concentration model combines the linear growth factor with the rms fluctuation of the linear density field obtained in the first step. In addition, the halo formation epoch can be derived from either a semi-analytical model or an alternative fitting formula for the halo mass accretion history (MAH).
+---
 
-##  File Structure
+## Features
 
--  `GrowthFactor.py` - Linear growth factor calculation by solving second-order differential equations (ODE).
--  `cosmology_params.py` - Cosmological parameter configurations, users can incorporate their own desired cosmology into this function and then calculate the variance of the corresponding simulated dark matter halos.
--  `VarianceCalculator.py` - Core mass variance calculation class.
--  `halo_variance.py` - Main program for variance calculation.
--  `Formation_and_structure.py` - Calculates the halo formation redshift and concentration based on the dark halo mass accretion history and structure model.
--  `halo_pipeline.py` - A main controller that runs all the functions in order.
--  `input_masses.dat` - The required dataset of halo virial mass ($M_{vir}$).
--  `output_variance.dat` - The dataset of the rms fluctuation of the linear density field of halo.
--  `halo_properties_z_cosmology.dat` - The halo properties dataset includes: halo mass $M_{\mathrm{vir}}$, linear density fluctuations $\sigma(M)$ and $\sigma(M/2)$, redshift $z$, linear growth factors $D(z)$ and $D(z_{\mathrm{f},\mathrm{peak}})$, and halo concentrations $c_{\mathrm{vir}}$. Export the values ​​for three different concentrations: (1) $c_{\mathrm{vir},\mathrm{sim}}$ calculated using the universal fitting formula for $D(z_{\mathrm{f},\mathrm{peak}})$; (2) $c_{\mathrm{vir},\mathrm{eps}}$ and (3) $c_{\mathrm{vir},\mathrm{eps}2}$ derived from the analytical expression of $D(z_{\mathrm{f},\mathrm{peak}})$ with formation mass fractions f = 0.5 and f = 0.16, respectively.
--  `Comparison_concentration_for_various_cosmologies.pdf` - A detailed comparison of peak concentrations between various cosmological models and Planck cosmology predictions.
+- Compute halo variance from input halo masses
+- Predict halo formation-time proxy `D(z_f)`
+- Predict halo concentration using a universal calibrated model
+- Support for multiple cosmologies:
+  - `ΛCDM`
+  - `OCDM`
+  - `wCDM`
+  - `SCDM`
+  - `LWDM`
+  - scale-free / EdS-like setups
+- A wide range of cosmological models is provided in `cosmology_params.py`; users may also define additional cosmologies of interest by extending this file.
+- Support for multiple halo definitions:
+  - `vir`
+  - `200c`
+- Support for multiple concentration relations:
+  - `peak`
+  - `mean`
+  - `median`
+- Automatic LWDM half-mode mass calculation from cosmological parameters
 
-**Note:​**​ Cosmology: LCDM, SCDM, OCDM, EdS, LWDM, wCDM.
-  
+---
 
-##  Usage
-First, you need to provide the halo mass `input_masses.dat` and the corresponding cosmological model `cosmology_params.py`. You can also add your desired cosmology in the `cosmology_params.py`. Then, use `growth_factor.py` and `halo_variance.py` to calculate $D(z)$ and $\sigma(M)$. Finally, use `formation_and_structure.py` to calculate the halo concentration parameters. Alternatively, you can simply execute `halo_pipeline.py`. The execution code is shown below.
+## Repository Structure
 
-###  Command Line Arguments
-```bash
-# Run calculation
-python  halo_pipeline.py  input_masses.dat  [cosmology] [redshift]
-# Examples
-python halo_pipeline.py input_masses.dat LCDM 0.0 
+```text
+.
+├── README.md
+├── input_masses.dat
+├── cosmology_params.py
+├── GrowthFactor.py
+├── VarianceCalculator.py
+├── halo_variance.py
+├── halo_model.py
+├── halo_pipeline.py
+└── output_halo_properties/
 ```
 
+## Main Files
+
+- `cosmology_params.py`  
+  Cosmological parameter configurations.
+
+- `GrowthFactor.py`  
+  Linear growth factor calculation.
+
+- `VarianceCalculator.py`  
+  Halo variance calculation tools.
+
+- `halo_variance.py`  
+  Script to compute halo variance from an input mass file.
+
+- `halo_model.py`  
+  Universal halo formation and concentration model.
+
+- `halo_pipeline.py`  
+  End-to-end pipeline for variance and concentration prediction.
+
+---
+
+## Quick Start
+
+Prepare an input file named:
+
+```text
+input_masses.dat
+```
+
+Then run the full pipeline, for example:
+
+```bash
+python halo_pipeline.py planck18 0.0 
+python halo_pipeline.py planck18 0.0 median
+```
+
+If you only want to compute the halo mass variance, for example:
+
+```bash
+python halo_variance.py input_masses.dat planck18 0.0
+```
+
+---
+
+## Model Description
+
+The universal formation-time model is
+
+```math
+D(z_f)_{\rm CDM}
+=
+D(z)\left[
+a_1 \left(\frac{M}{10^{12}}\right)^{b_1}
++
+a_2 D(z)^{b_2}
+\right].
+```
+
+For LWDM cosmologies, a half-mode mass correction is applied:
+
+```math
+D(z_f)
+=
+D(z_f)_{\rm CDM}
+\left[
+1 + \eta \left(\frac{M_{\rm hm}}{M}\right)^\mu
+\right].
+```
+
+The concentration model is
+
+```math
+c = \alpha \nu_{\rm eff}^{\beta} + \gamma,
+```
+
+with
+
+```math
+\nu_{\rm eff} = \nu_{\rm f}\left(1 + A \frac{M_{\rm hm}}{M}\right),
+```
+
+and
+
+```math
+\nu_{\rm f}
+=
+\frac{\delta_c}{\sigma(M)\,D(z)\,D(z_f)}.
+```
+
+The implemented model supports different halo definitions (`vir`, `200c`) and different relations (`peak`, `mean`, `median`).
+
+---
+
+## Scientific Scope
+
+This package is intended for:
+
+- halo concentration modeling
+- halo formation-time proxy studies
+- cross-cosmology comparisons
+- CDM and LWDM halo structure analysis
+
+It is designed as a research implementation of the universal concentration model used in this work.
+
+---
+
+## Citation
+
+If you use this code in scientific work, please cite the associated paper of this repository.
