@@ -4,8 +4,10 @@ Halo Analysis Pipeline
 
 Unified interface for the two-step halo analysis pipeline.
 
-Usage: python halo_pipeline.py [mass_file] [cosmology] [redshift]
-Example: python halo_pipeline.py input_masses.dat LCDM 0.0
+Usage: python halo_pipeline.py [cosmology] [redshift] [mode]
+Modes: peak, mean, median, or all (default: peak)
+Example: python halo_pipeline.py planck18 0.0
+         python halo_pipeline.py planck18 0.0 mean
 """
 import sys
 import subprocess
@@ -14,31 +16,53 @@ import time
 from datetime import datetime
 
 def main():
-    if len(sys.argv) != 4:
+
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
         print(__doc__)
-        print("\nArguments:")
-        print("  mass_file  : Path to halo mass file")
-        print("  cosmology  : Cosmology model (LCDM, etc.)")
-        print("  redshift   : Redshift value")
-        print("\nExample: python halo_pipeline.py input_masses.dat LCDM 0.0")
+        print("Arguments:")
+        print("  cosmology  : Cosmology model (planck18, WMAP7, etc.)")
+        print("  redshift   : Redshift value (e.g., 0.0)")
+        print("  mode       : Fit mode: peak, mean, median, or all (optional, default: peak)")
         sys.exit(1)
     
-    mass_file, cosmology, redshift = sys.argv[1], sys.argv[2], sys.argv[3]
+    # halo mass file
+    mass_file = "input_masses.dat"
+    
+    cosmology = sys.argv[1]
+    redshift = sys.argv[2]
+    
+    mode_input = sys.argv[3].lower() if len(sys.argv) == 4 else 'peak'
+    
+    valid_modes = ['peak', 'mean', 'median']
+    if mode_input == 'all':
+        modes_to_run = valid_modes
+    elif mode_input in valid_modes:
+        modes_to_run = [mode_input]
+    else:
+        print(f"ERROR: Invalid mode '{mode_input}'. Please choose from: peak, mean, median, all")
+        sys.exit(1)
+        
+    # halo identification
+    halo_defs = ['200c', 'vir']
     
     # Start timing
     start_time = time.time()
     start_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    print("=" * 50)
+    print("=" * 60)
     print("HALO ANALYSIS PIPELINE")
-    print("=" * 50)
+    print("=" * 60)
     print(f"Start time: {start_datetime}")
-    print(f"Input:      {mass_file}")
+    print(f"Input Data: {mass_file}")
     print(f"Cosmology:  {cosmology}")
     print(f"Redshift:   z = {redshift}")
-    print("=" * 50)
+    print(f"Modes:      {', '.join(modes_to_run)}")
+    print(f"Halo Defs:  {', '.join(halo_defs)}")
+    print("=" * 60)
     
+    # ---------------------------------------------------------
     # Step 1: Compute halo mass variance
+    # ---------------------------------------------------------
     print("\n[STEP 1/2] Computing halo mass variance...")
     cmd1 = ["python", "halo_variance.py", mass_file, cosmology, redshift]
     print(f"Running: {' '.join(cmd1)}")
@@ -57,47 +81,55 @@ def main():
     
     print(f"Step 1 completed ({step1_time:.1f} seconds)")
     
+    # ---------------------------------------------------------
     # Step 2: Compute halo concentrations
+    # ---------------------------------------------------------
     print("\n[STEP 2/2] Computing halo concentrations...")
-    cmd2 = ["python", "Formation_and_structure.py", "output_variance.dat", cosmology, redshift]
-    print(f"Running: {' '.join(cmd2)}")
     
     step2_start = time.time()
-    result2 = subprocess.run(cmd2)
+    generated_files = []
+    
+    for current_mode in modes_to_run:
+        for current_def in halo_defs:
+            print(f"\n--- Processing: Mode = {current_mode.upper()}, Def = {current_def.upper()} ---")
+            
+            cmd2 = ["python", "halo_model.py", "output_variance.dat", cosmology, redshift, current_def, current_mode]
+            print(f"Running: {' '.join(cmd2)}")
+            
+            result2 = subprocess.run(cmd2)
+            
+            if result2.returncode != 0:
+                print(f"ERROR: Step 2 failed for {current_def} {current_mode}")
+                sys.exit(1)
+                
+            expected_output = f"./output_halo_properties/halo_properties_{redshift}_{cosmology}_{current_def}_{current_mode}.dat"
+            if os.path.exists(expected_output):
+                generated_files.append(expected_output)
+            else:
+                print(f"WARNING: Expected output {expected_output} not found.")
+                
     step2_time = time.time() - step2_start
-    
-    if result2.returncode != 0:
-        print("ERROR: Step 2 failed")
-        sys.exit(1)
-    
-    # Check output file
-    output_files = [
-        f"halo_properties_z{redshift}_{cosmology}.dat",
-        f"halo_properties_{redshift}_{cosmology}.dat"
-    ]
-    
-    output_file = None
-    for f in output_files:
-        if os.path.exists(f):
-            output_file = f
-            break
-    
     total_time = time.time() - start_time
     
-    if output_file:
-        print("\n" + "=" * 50)
+    # ---------------------------------------------------------
+    # Summary
+    # ---------------------------------------------------------
+    if generated_files:
+        print("\n" + "=" * 60)
         print("PIPELINE COMPLETED SUCCESSFULLY")
-        print("=" * 50)
-        print(f"Results saved to: {output_file}")
-        file_size = os.path.getsize(output_file)
-        print(f"File size:       {file_size:,} bytes")
+        print("=" * 60)
+        print("Results saved to:")
+        for f in generated_files:
+            file_size = os.path.getsize(f)
+            print(f"  - {f} ({file_size:,} bytes)")
+        
         print("\nTIMING SUMMARY:")
-        print(f"Step 1 (variance):    {step1_time:.1f} seconds")
+        print(f"Step 1 (variance):      {step1_time:.1f} seconds")
         print(f"Step 2 (concentration): {step2_time:.1f} seconds")
-        print(f"Total time:           {total_time:.1f} seconds")
-        print("=" * 50)
+        print(f"Total time:             {total_time:.1f} seconds")
+        print("=" * 60)
     else:
-        print("ERROR: Could not find output file")
+        print("ERROR: Could not find any output files")
         print(f"Total time elapsed: {total_time:.1f} seconds")
         sys.exit(1)
 
