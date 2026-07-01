@@ -194,7 +194,7 @@ cosmology_configs = {
         'h': 0.6766,
         'omega_m': 1.0,
         'omega_b': 0.0,
-        'n': 1.0,
+        'n': -2.0,
         'sigma_8': 1.0,
         'delta_c': 1.686,
         'cosmology_type': 'EdS',
