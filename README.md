@@ -1,32 +1,16 @@
-# Halo Concentration Universal Model (Paper I & Paper II)
+# Universal Models for Dark Matter Halos (Papers I, II, & III)
 
-A Python package for computing halo mass variance, formation-time proxies, and halo concentration predictions using the universal models calibrated in **Paper I** (population-level statistics: `peak`, `mean`, `median`) and **Paper II** (individual halo concentrations from assembly histories and concentration distributions: `relaxed`, `all_halos`, `relaxed_einasto`).
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-This repository implements a unified two-step workflow:
+A unified, modular Python package linking **cosmological initial conditions**, **halo assembly histories (MAHs)**, and **halo internal density profiles** across cold dark matter (CDM), warm dark matter (WDM), and non-standard cosmologies.
 
-1. compute halo mass variance from an input halo file (`input_masses.dat`);
-2. predict halo formation-time quantities and halo concentrations using the universal models of Paper I and Paper II.
+This package integrates the complete three-part theoretical framework:
+1. **Paper I (Population-level Statistics)**: Characteristic formation-time proxies and statistical halo concentration relations (`peak`, `mean`, `median`) across CDM and $\Lambda$WDM cosmologies.
+2. **Paper II (Individual Halo Concentrations & Assembly Diversity)**: Predicting individual halo concentrations from assembly histories ($\omega_{\rm f}$) and modeling concentration distributions via simulation-calibrated Generalized Gamma distributions $P(\omega_{\rm f})$.
+3. **Paper III (Universal Mass Accretion Histories & Bidirectional Archaeology)**: Parameter-free universal mass accretion histories $M(\tau)/M_0$ in self-similar $\tau$-space, forward prediction of continuous concentration evolution $c(z)$, and Bayesian Maximum A Posteriori (MAP) archaeological reconstruction of past MAHs from snapshot $(M_{\rm obs}, c_{\rm obs}, z_{\rm obs})$ observations.
 
-The package supports both standard CDM-like cosmologies and $\Lambda$WDM cosmologies with an analytic half-mode mass ($M_{\rm hm}$) correction. To keep outputs cleanly separated:
-- **Paper I outputs** (statistical $c$–$M$ relations) are saved in `./output_halo_properties/`
-- **Paper II outputs** (individual halo $c$ & $c$ distributions) are saved in `./output_individual_halo_properties/`
-
----
-
-## Features
-
-- Compute halo mass variance $\sigma(M)$ and linear growth factor $D(z)$ from input halo masses
-- **Paper I (Population Statistics)**:
-  - Predict characteristic halo formation-time proxy $D(z_{\rm f})$
-  - Predict statistical halo concentrations (`peak`, `mean`, `median`) under `vir` and `200c` definitions
-- **Paper II (Individual Halos & Concentration Distributions)**:
-  - **Case A — Known Formation Time (`Mass  z_f` in `input_masses.dat`)**: Given individual halo mass $M$ and half-mass assembly redshift $z_{\rm f}$, compute each halo's scaled formation variable $\omega_{\rm f}$ and directly predict its concentration $c_\Delta$ via the empirical multi-linear regression model (Equation 5 for NFW; Equation 8 for Einasto $\alpha=0.18$).
-  - **Case B — Unknown Formation Time, Only $M$ and $z$ Given (`Mass` in `input_masses.dat`)**: When only halo mass $M$ is provided, automatically draw $\omega_{\rm f}$ via Monte Carlo sampling from the simulation-calibrated Generalized Gamma distribution $P(\omega_{\rm f})$ (Equation 6, Figure 3) and theoretical EPS distribution $p_{\rm EPS}(\omega_{\rm f})$, and combine with the intrinsic Gaussian residual scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$ to predict the full halo concentration distribution $c(M)$ (Figure 4).
-- Support for multiple cosmologies (`cosmology_params.py`):
-  - `ΛCDM` (`planck18`, `planck15`, `WMAP1`–`WMAP9`, etc.)
-  - `OCDM`, `wCDM`, `SCDM`
-  - `LWDM` (with automatic half-mode mass $M_{\rm hm}$ calculation and sharp-$k$ filter)
-  - scale-free / EdS-like setups (`self_similar`)
+Users can run each paper's model **completely independently**, or **couple them together** to explore structural evolution across cosmic time.
 
 ---
 
@@ -34,199 +18,312 @@ The package supports both standard CDM-like cosmologies and $\Lambda$WDM cosmolo
 
 ```text
 .
-├── README.md
-├── LICENSE
-├── input_masses.dat
-├── cosmology_params.py
-├── GrowthFactor.py
-├── VarianceCalculator.py
-├── halo_variance.py
-├── halo_model.py
-├── halo_pipeline.py
+├── README.md                           # Comprehensive documentation
+├── LICENSE                             # MIT License
+├── cosmology_params.py                 # Cosmological parameter registry (Planck, WMAP, WDM, etc.)
+├── GrowthFactor.py                     # Linear growth factor D(z) differential equation solver
+├── VarianceCalculator.py               # Mass variance sigma(M) via CAMB (top-hat & sharp-k)
+├── halo_variance.py                    # Standalone variance & D(z_f) precomputation script
+├── halo_model.py                       # Paper I & Paper II concentration models
+├── mah_model.py                        # Paper III universal MAH, forward c(z), and Bayesian MAP inversion
+├── halo_pipeline.py                    # Unified master CLI runner across all three papers
+│
+├── input_masses.dat                    # Sample input: halo masses [and optional z_f]
+├── input_mass_concentration.dat        # Sample input: observed (M_obs, c_obs, z_obs) for reconstruction
+├── input_merger_tree_sample.dat        # Sample input: progenitor trees (halo_id, z, M) for forward c(z)
+│
 ├── output_halo_properties/             # Paper I outputs (statistical c: peak, mean, median)
-└── output_individual_halo_properties/  # Paper II outputs (individual halo c & c distribution)
+├── output_individual_halo_properties/  # Paper II outputs (individual c & c(M) distributions)
+└── output_mah_properties/             # Paper III outputs (MAH tracks, forward c(z), Bayesian MAP)
 ```
-
-## Main Files
-
-- `cosmology_params.py`  
-  Cosmological parameter configurations. Users may also define additional cosmologies of interest by extending this file.
-
-- `GrowthFactor.py`  
-  Linear growth factor $D(z)$ calculation.
-
-- `VarianceCalculator.py`  
-  Halo mass variance $\sigma(M)$ calculation tools (real-space top-hat filter for CDM, sharp-$k$ filter for WDM).
-
-- `halo_variance.py`  
-  Script to compute halo variance (and $D(z_{\rm f})$ when a second column $z_{\rm f}$ is provided in `input_masses.dat`).
-
-- `halo_model.py`  
-  Universal halo concentration models for both Paper I and Paper II.
-
-- `halo_pipeline.py`  
-  Unified end-to-end pipeline for variance and concentration prediction.
 
 ---
 
-## Quick Start
+## Installation & Requirements
 
-### 1. Prepare `input_masses.dat`
-
-- **1 column (`Mass`)**: Provide halo masses in $[h^{-1}M_\odot]$.
-  - Used by **Paper I** to compute statistical concentrations (`peak`, `mean`, `median`).
-  - Used by **Paper II** when halo formation times are unknown: the code automatically performs Monte Carlo sampling of $\omega_{\rm f}$ from $P(\omega_{\rm f})$ and adds the Gaussian residual scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$ to predict the concentration distribution $c(M)$ (Paper II Figure 4).
-- **2 columns (`Mass  z_f`)**: Provide halo mass $M$ $[h^{-1}M_\odot]$ in column 1 and half-mass assembly redshift $z_{\rm f}$ in column 2.
-  - Used by **Paper II** when individual halo formation times are known: the code computes the exact $D(z_{\rm f})$ and $\omega_{\rm f}$ for each halo and predicts its individual concentration $c_\Delta$.
-
-### 2. Run the Pipeline
+Ensure you have Python 3.8+ and the following dependencies installed:
 
 ```bash
-# =========================================================================
-# Paper I: Statistical concentrations -> saved to ./output_halo_properties/
-# =========================================================================
-python halo_pipeline.py planck18 0.0          # default: peak (200c & vir)
-python halo_pipeline.py planck18 0.0 median   # median (200c & vir)
-python halo_pipeline.py planck18 0.0 mean     # mean (200c & vir)
-python halo_pipeline.py planck18 0.0 all      # peak, mean, and median
-
-# =========================================================================
-# Paper II: Individual halo c & c(M) distribution
-#           -> saved to ./output_individual_halo_properties/
-# =========================================================================
-python halo_pipeline.py planck18 0.0 individual       # runs relaxed, all_halos, and relaxed_einasto
-python halo_pipeline.py planck18 0.0 relaxed          # NFW relaxed halos (200c & vir)
-python halo_pipeline.py planck18 0.0 all_halos        # NFW all halos (200c & vir)
-python halo_pipeline.py planck18 0.0 relaxed_einasto  # Einasto (alpha=0.18) relaxed halos (200c)
+pip install numpy scipy camb
 ```
 
-If you only want to compute the halo mass variance table (`output_variance.dat`):
+Clone the repository:
+```bash
+git clone https://github.com/wangdz630/concentration_universal_model.git
+cd concentration_universal_model
+```
+
+---
+
+## Quick Start: Command Line Interface (CLI)
+
+The package provides two convenient CLI entry points:
+- **`halo_pipeline.py`**: A one-stop pipeline for running any paper or all papers in sequence.
+- **`mah_model.py`**: A specialized, highly flexible tool for Paper III MAH modeling, forward tracking, and Bayesian inverse reconstruction.
+
+### 1. Unified Pipeline (`halo_pipeline.py`)
+
+Syntax: `python halo_pipeline.py [cosmology] [redshift] [mode] [halo_def]`
+- If `halo_def` is omitted, the pipeline runs **both `200c` and `vir`** by default.
+- Specify `vir` or `200c` to run for a specific halo definition only.
 
 ```bash
-python halo_variance.py input_masses.dat planck18 0.0
+# -------------------------------------------------------------------------
+# Paper I: Statistical concentration relations (saved to ./output_halo_properties/)
+# -------------------------------------------------------------------------
+python halo_pipeline.py planck18 0.0 peak            # Peak concentration (both 200c and vir)
+python halo_pipeline.py planck18 0.0 peak vir        # Peak concentration (vir only)
+python halo_pipeline.py planck18 0.0 mean            # Mean concentration
+python halo_pipeline.py planck18 0.0 median          # Median concentration
+python halo_pipeline.py planck18 0.0 all             # Run peak, mean, and median
+
+# -------------------------------------------------------------------------
+# Paper II: Individual concentrations & distributions (saved to ./output_individual_halo_properties/)
+# -------------------------------------------------------------------------
+python halo_pipeline.py planck18 0.0 relaxed         # NFW relaxed halos (both 200c & vir)
+python halo_pipeline.py planck18 0.0 relaxed vir     # NFW relaxed halos (vir only)
+python halo_pipeline.py planck18 0.0 all_halos       # NFW all halos (both 200c & vir)
+python halo_pipeline.py planck18 0.0 relaxed_einasto # Einasto relaxed halos (200c)
+python halo_pipeline.py planck18 0.0 individual      # Run all Paper II relations
+
+# -------------------------------------------------------------------------
+# Paper III: Universal MAH & Structural Evolution (saved to ./output_mah_properties/)
+# -------------------------------------------------------------------------
+python halo_pipeline.py planck18 0.0 mah             # Universal MAH tracks M(z)/M0 (both 200c & vir)
+python halo_pipeline.py planck18 0.0 mah vir         # Universal MAH tracks (vir only)
+python halo_pipeline.py planck18 0.0 c_evolution     # Continuous concentration evolution c(z)
+python halo_pipeline.py planck18 0.0 c_evolution vir # Continuous c(z) (vir only)
+python halo_pipeline.py planck18 0.0 reconstruct     # Bayesian MAP reconstruction from (M, c)
+python halo_pipeline.py planck18 0.0 reconstruct vir # Bayesian MAP reconstruction (vir only)
+
+# -------------------------------------------------------------------------
+# Run All Papers Simultaneously
+# -------------------------------------------------------------------------
+python halo_pipeline.py planck18 0.0 all_papers      # Runs peak, relaxed, mah, c_evolution
+python halo_pipeline.py planck18 0.0 all_papers vir  # All papers for vir only
 ```
 
 ---
 
-## Model Description
+### 2. Standalone Paper III CLI (`mah_model.py`)
 
-### Part 1: Paper I — Statistical Concentration Model (`peak`, `mean`, `median`)
+`mah_model.py` provides dedicated subcommands for advanced Paper III tasks:
 
-The universal characteristic formation-time model is
+#### Task A: Mass Accretion Histories (`mah`)
+Compute individual or median MAH trajectories $M(z)/M_0$:
+```bash
+# Automatically detects if input_masses.dat has 2 columns (Mass z_f) or 1 column (Mass)
+python mah_model.py mah --input input_masses.dat --cosmology planck18 --halo-def vir
 
-```math
-D(z_{\rm f})_{\rm CDM}
-=
-D(z)\left[
-a_1 \left(\frac{M}{10^{12}\,h^{-1}M_\odot}\right)^{b_1}
-+
-a_2 D(z)^{b_2}
-\right].
+# Generate purely analytical population median MAHs (Paper III Figure 3)
+python mah_model.py mah --input input_masses.dat --omega median
+
+# Generate synthetic Monte Carlo MAH ensembles drawn from Paper II's P(omega_f) (Paper III Figure 4)
+python mah_model.py mah --input input_masses.dat --omega sim
 ```
 
-For $\Lambda$WDM cosmologies, a half-mode mass correction is applied:
+#### Task B: Forward Concentration Evolution $c(z)$ (`c_evolution`)
+Predict continuous concentration evolution from $z=5$ to $z=0$ (Paper III Section 4, Figure 7):
+```bash
+# Tree-independent forward c(z) driven by the universal MAH model:
+python mah_model.py c_evolution --input input_masses.dat --cosmology planck18
 
-```math
-D(z_{\rm f})
-=
-D(z_{\rm f})_{\rm CDM}
-\left[
-1 + \eta \left(\frac{M_{\rm hm}}{M}\right)^\mu
-\right].
+# Driven by an exact simulated merger tree (columns: halo_id  z  M(z)):
+python mah_model.py c_evolution --tree input_merger_tree_sample.dat --cosmology planck18
 ```
 
-The population concentration (`peak`, `mean`, or `median`) is
-
-```math
-c = \alpha \nu_{\rm eff}^{\beta} + \gamma,
-\qquad
-\nu_{\rm eff} = \nu_{\rm peak}\left(1 + A \frac{M_{\rm hm}}{M}\right),
-\qquad
-\nu_{\rm peak} = \frac{\delta_c}{\sigma(M)\,D(z)\,D(z_{\rm f})}.
+#### Task C: Bayesian Archaeological Inverse Reconstruction (`reconstruct`)
+Reconstruct continuous historical MAHs and $1\sigma$ credible bands from snapshot observables $(M_{\rm obs}, c_{\rm obs}, z_{\rm obs})$ (Paper III Section 5, Figure 8 & Figure 9):
+```bash
+python mah_model.py reconstruct --input input_mass_concentration.dat --cosmology planck18 --halo-def vir
 ```
 
 ---
 
-### Part 2: Paper II — Individual Halo Concentration & Distribution Model (`relaxed`, `all_halos`, `relaxed_einasto`)
+## Python API: Unified Python Usage
 
-To parameterize the individual mass accretion history (MAH) of a halo, Paper II uses the EPS-scaled formation variable:
+You can import `UniversalHaloModel` from `mah_model.py` to seamlessly execute calculations from Papers I, II, and III in your own scripts or Jupyter notebooks:
 
-```math
-\omega_{\rm f} = \frac{\delta_{\rm sc}(z_{\rm f}) - \delta_{\rm sc}(z)}{\sqrt{\sigma^2(0.5M) - \sigma^2(M)}},
-\qquad
-\delta_{\rm sc}(z) = \frac{1.686}{D(z)}.
+```python
+import numpy as np
+from mah_model import UniversalHaloModel
+
+# Initialize model for Planck 2018 cosmology under virial definition
+model = UniversalHaloModel('planck18', halo_def='vir')
+
+# =========================================================================
+# 1. Paper I: Statistical Concentration Relations
+# =========================================================================
+M = np.array([1e12, 1e13, 1e14])  # Msun/h
+c_peak = model.concentration_paper1(M, z=0.0, statistic='peak')
+print("Paper I Peak concentrations:", c_peak)
+
+# =========================================================================
+# 2. Paper II: Individual Halo Concentration
+# =========================================================================
+omega_f = np.array([1.10, 1.35, 1.70])  # Assembly parameter
+c_indiv = model.concentration_paper2(M, omega_f, z=0.0, relation='relaxed')
+print("Paper II Individual concentrations:", c_indiv)
+
+# =========================================================================
+# 3. Paper III: Universal Mass Accretion History (MAH)
+# =========================================================================
+z_eval = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
+# Track M(z)/M0 for an individual halo with known half-mass redshift z_f = 1.2
+ratio = model.mah(z_eval, M=1e14, z_f=1.2)
+print("MAH M(z)/M0:", ratio)
+
+# =========================================================================
+# 4. Paper III: Forward Concentration Evolution c(z)
+# =========================================================================
+# Continuous c(z) trajectory (tree-free, driven by universal MAH model):
+c_z = model.concentration_track_model(z_eval=[0, 0.5, 1, 2, 3], M=1e14, omega_f=1.35)
+print("Forward c(z):", c_z)
+
+# =========================================================================
+# 5. Paper III: Bayesian MAP Inverse Reconstruction
+# =========================================================================
+# Given an observed galaxy cluster: M_obs = 1e15 Msun/h, c_obs = 5.2 at z_obs = 0.44
+recon = model.reconstruct(M_obs=1e15, c_obs=5.2, z_obs=0.44, z_eval=[0.5, 1.0, 2.0])
+print("MAP inferred formation parameter omega_f:", recon['omega_f_MAP'])
+print("MAP inferred formation redshift z_f:", recon['z_f_MAP'])
+print("Historical MAH trajectory M(z)/M_obs:", recon['tracks'])
 ```
-
-The concentration of an individual halo is modeled via the universal regression relation (Paper II Equation 5 for NFW; Equation 8 for Einasto $\alpha=0.18$):
-
-```math
-\log_{10} c_{\Delta,{\rm eq5}}
-=
-A + \alpha_D \log_{10} D(z) + \alpha_\sigma \log_{10} \sigma(M) + \beta \log_{10}(1 + \omega_{\rm f}) + \gamma \log_{10} A_{\rm hm},
-```
-
-where the WDM small-scale damping factor is
-
-```math
-A_{\rm hm} = 1 + a \frac{M_{\rm hm}}{M_\Delta},
-```
-
-and the calibrated parameters $(A, \alpha_D, \alpha_\sigma, \beta, \gamma, a, \sigma_{\rm res})$ are taken from Table 2 and Equation (8) of Paper II.
-
-#### Two Prediction Regimes in Paper II:
-
-1. **Predicting Individual Halo $c$ from Known Formation Time (`input_masses.dat` has 2 columns: `Mass  z_f`)**:
-   - When the half-mass formation redshift $z_{\rm f}$ of each halo is provided in the input file, `halo_variance.py` computes the exact $D(z_{\rm f})$ for each halo, and `halo_model.py` evaluates its exact $\omega_{\rm f}$ to directly predict the individual halo concentration $c_{\rm sim\_eq5}$ (Column 8) via Equation (5) or Equation (8).
-   - A realization including the intrinsic logarithmic residual scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$ is also provided in Column 9 (`c_sim_mc`).
-
-2. **Predicting the Concentration Distribution $c(M)$ When Only Mass $M$ Is Given (`input_masses.dat` has 1 column: `Mass`)**:
-   - When formation times are not provided in `input_masses.dat`, the code draws random realizations of $\omega_{\rm f}$ via Monte Carlo sampling from the simulation-calibrated Generalized Gamma PDF (Paper II Equation 6, Figure 3):
-     ```math
-     P(\omega_{\rm f}) = C_0 \left(\frac{\omega_{\rm f}}{\omega_0}\right)^k \exp\left[-\frac{k}{p}\left(\frac{\omega_{\rm f}}{\omega_0}\right)^p\right], \qquad (\omega_{\rm f} \ge 0),
-     ```
-     with $(\omega_0, k, p) = (1.25, 2.14, 2.04)$ for CDM and $(1.21, 1.82, 2.70)$ for WDM, as well as from the theoretical EPS distribution $p_{\rm EPS}(\omega_{\rm f}) = 2\omega_{\rm f}\,{\rm erfc}(\omega_{\rm f}/\sqrt{2})$.
-   - Following Paper II (Figure 4), the predicted concentration distribution incorporates the Gaussian residual scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$ around the regression relation:
-     ```math
-     \log_{10} c_{\rm MC} = \log_{10} c_{\Delta,{\rm eq5}}(\omega_{\rm f}) + \mathcal{N}(0, \sigma_{\rm res}^2),
-     ```
-     which is saved in Column 9 (`c_sim_mc`, using $\omega_{\rm f} \sim P(\omega_{\rm f})$) and Column 10 (`c_eps_mc`, using $\omega_{\rm f} \sim p_{\rm EPS}(\omega_{\rm f})$), while Column 8 (`c_sim_eq5`) stores the noiseless regression value $c_{\Delta,{\rm eq5}}$.
 
 ---
 
-## Output Files & Column Descriptions
+## Theoretical Framework
 
-### 1. Paper I Outputs (`./output_halo_properties/halo_properties_{z}_{cosmology}_{200c|vir}_{peak|mean|median}.dat`)
-- `0:Mvir[Msun/h]`: Halo mass $[h^{-1}M_\odot]$
-- `1:sigma(M,0)`: Linear rms density fluctuation $\sigma(M, z=0)$
-- `2:sigma(M_f,0)(f=0.50)`: Linear rms fluctuation at half mass $\sigma(0.5M, z=0)$
-- `3:z`: Halo identification redshift $z$
-- `4:D(z)`: Linear growth factor at redshift $z$
-- `5:D(z_f)_simfit`: Characteristic formation growth factor $D(z_{\rm f})$ from Paper I universal fit
-- `6:D(z_f)_eps(f=0.50)`: EPS formation growth factor for $f=0.50$
-- `7:D(z_f)_eps(f=0.16)`: EPS formation growth factor for $f=0.16$
-- `8:c_simfit`: Predicted statistical concentration (`peak`, `mean`, or `median`) from Paper I
-- `9:c_eps(f=0.50)`: Concentration predicted using $D(z_{\rm f})_{\rm eps}(f=0.50)$
-- `10:c_eps(f=0.16)`: Concentration predicted using $D(z_{\rm f})_{\rm eps}(f=0.16)$
-- `11:M_hm[Msun/h]`: Half-mode mass $[h^{-1}M_\odot]$ ($0$ for CDM)
+### 1. Paper I — Statistical Concentration Model
+Relates peak height $\nu$ and characteristic formation growth factor $D(z_{\rm f})$:
+```math
+D(z_{\rm f})_{\rm CDM} = D(z)\left[a_1 \left(\frac{M}{10^{12}\,h^{-1}M_\odot}\right)^{b_1} + a_2 D(z)^{b_2}\right],
+```
+```math
+c = \alpha \nu_{\rm eff}^\beta + \gamma, \qquad \nu_{\rm eff} = \frac{\delta_{\rm sc}(0)}{\sigma(M) D(z) D(z_{\rm f})} \left(1 + A \frac{M_{\rm hm}}{M}\right).
+```
 
-### 2. Paper II Outputs (`./output_individual_halo_properties/c_distribution_{z}_{cosmology}_{200c|vir}_{relaxed|all_halos|relaxed_einasto}.dat`)
-- `0:Mvir[Msun/h]`: Halo mass $[h^{-1}M_\odot]$
-- `1:sigma(M,0)`: Linear rms density fluctuation $\sigma(M, z=0)$
-- `2:sigma(M_f,0)(f=0.50)`: Linear rms fluctuation at half mass $\sigma(0.5M, z=0)$
-- `3:z`: Halo identification redshift $z$
-- `4:D(z)`: Linear growth factor at redshift $z$
-- `5:omega_f_sim`: Scaled formation variable $\omega_{\rm f}$ — computed from input $z_{\rm f}$ if 2 columns (`Mass  z_f`) are provided in `input_masses.dat`, or Monte Carlo sampled from Eq. (6) $P(\omega_{\rm f})$ if only 1 column (`Mass`) is provided
-- `6:omega_f_eps`: $\omega_{\rm f}$ Monte Carlo sampled from the theoretical EPS distribution $p_{\rm EPS}(\omega_{\rm f})$
-- `7:D(z_f)_sim`: Linear growth factor $D(z_{\rm f})$ corresponding to `omega_f_sim`
-- `8:c_sim_eq5`: Concentration predicted directly by Eq. (5) / Eq. (8) without adding $\mathcal{N}(0, \sigma_{\rm res}^2)$ (exact regression prediction for individual halos when $z_{\rm f}$ is given)
-- `9:c_sim_mc`: Predicted concentration including the intrinsic Gaussian scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$ in $\log_{10} c$, i.e. $\log_{10} c_{\rm sim\_mc} = \log_{10} c_{\rm sim\_eq5} + \mathcal{N}(0, \sigma_{\rm res}^2)$ (reproduces the simulation-based $P(\omega_{\rm f})$ concentration distribution in Paper II Figure 4)
-- `10:c_eps_mc`: Predicted concentration using EPS $\omega_{\rm f,eps}$ and including $\mathcal{N}(0, \sigma_{\rm res}^2)$ (reproduces the EPS-based concentration distribution in Paper II Figure 4)
-- `11:M_hm[Msun/h]`: Half-mode mass $[h^{-1}M_\odot]$ ($0$ for CDM)
+### 2. Paper II — Individual Halo Concentration Relation
+Decouples cosmic expansion, mass variance, individual assembly history $\omega_{\rm f}$, and WDM suppression:
+```math
+\log_{10} c_{\rm vir}(z) = A + \alpha_D \log_{10} D(z) + \alpha_\sigma \log_{10} \sigma(M) + \beta \log_{10}(1 + \omega_{\rm f}) + \gamma \log_{10} A_{\rm hm},
+```
+where the scaled formation variable is
+```math
+\omega_{\rm f} = \frac{\delta_{\rm sc}(z_{\rm f}) - \delta_{\rm sc}(z)}{\sqrt{\sigma^2(0.5M) - \sigma^2(M)}}.
+```
+
+### 3. Paper III — Universal Parameter-Free MAH Model
+In dimensionless self-similar time $\tau(z) = [D(z)^{-1} - 1] / [D(z_{\rm f})^{-1} - 1]$, mass variance cancels identically:
+```math
+\frac{M(\tau)}{M_0} = (1 + \tau)^\beta 2^{-(1 + \beta)\tau}, \qquad \beta = A_{\rm hm} \omega_{\rm f} - \omega_{\rm f,peak},
+```
+where $\omega_{\rm f,peak} = 1.25$ (vir) and $1.29$ (200c), and $A_{\rm hm} = 1 + a (M_{\rm hm}/M_0)$ ($A_{\rm hm} = 1$ for CDM). Contains **zero free fitting parameters**.
+
+### 4. Paper III — Bayesian MAP Archaeological Inversion
+Inverting the linear concentration observable $y = \beta u + \epsilon$ (where $u \equiv \log_{10}(1 + \omega_{\rm f})$) with a Gaussian cosmological prior $u \sim \mathcal{N}(0.368, 0.094^2)$ yields the exact conjugate posterior:
+```math
+\mu_{\rm post} = \frac{w_{\rm prior}\mu_{\rm prior} + w_{\rm like}(y/\beta)}{w_{\rm prior} + w_{\rm like}}, \qquad \sigma_{\rm post} = \frac{1}{\sqrt{w_{\rm prior} + w_{\rm like}}}.
+```
 
 ---
 
-## Citation
+## Output Files & Column Reference
 
-If you use this code in scientific work, please cite:
-- **Paper I**: Wang, D.-Z., Lin, W., & Luan, T.-C. 2026, *Universal Fitting Formulae for the Peak Concentration of Dark Matter Halos*, ApJ, 1006, 61, doi:10.3847/1538-4357/ae81a2
-- **Paper II**: Wang, D.-Z., Lin, W., Zhu, W., & Luan, T.-C. 2026, *Predicting Individual Dark Matter Halo Concentrations from Their Assembly Histories*
+All outputs are saved as single, intuitive text tables (one row per halo / cluster) with explicit column number headers matching the Paper I and Paper II formatting convention.
+
+### 1. Paper I Outputs (`./output_halo_properties/`)
+- `0:Mvir`: Halo mass $[h^{-1}M_\odot]$
+- `1:sigma_M`: $\sigma(M, z=0)$
+- `2:sigma_Mf`: $\sigma(0.5M, z=0)$
+- `3:z`: Redshift
+- `4:D_z`: Linear growth factor $D(z)$
+- `5:D_zf_simfit`: Characteristic formation factor $D(z_{\rm f})$ from Paper I fit
+- `8:c_simfit`: Predicted concentration (`peak`, `mean`, or `median`)
+- `11:M_hm`: Half-mode mass $[h^{-1}M_\odot]$
+
+### 2. Paper II Outputs (`./output_individual_halo_properties/`)
+- `0:Mvir`: Halo mass $[h^{-1}M_\odot]$
+- `5:omega_f_sim`: Scaled formation variable $\omega_{\rm f}$ (from input $z_{\rm f}$ or sampled from $P(\omega_{\rm f})$)
+- `8:c_sim_eq5`: Exact multi-linear regression prediction
+- `9:c_sim_mc`: Monte Carlo realization with intrinsic scatter $\mathcal{N}(0, \sigma_{\rm res}^2)$
+- `10:c_eps_mc`: Realization using standard EPS $\omega_{\rm f}$
+
+### 3. Paper III Outputs (`./output_mah_properties/`)
+- **Task 1: MAH Predictions** (`mah_predictions_<z>_<cosmo>_<def>_<mode>.dat`):
+  - `0:M0[Msun/h]`: Present/observed halo mass
+  - `1:z_obs`: Observation redshift
+  - `2:omega_f`: Scaled formation variable $\omega_{\rm f}$
+  - `3:z_f`: Half-mass formation redshift $z_{\rm f}$
+  - `4:beta`: MAH shape parameter $\beta = A_{\rm hm}\omega_{\rm f} - \omega_{\rm f,peak}$
+  - `5..N:M(z)/M0`: Normalized mass accretion ratios $M(z)/M_0$ at evaluated redshifts (e.g. $z=0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0$)
+
+- **Task 2: Forward Concentration Evolution** (`c_evolution_<cosmo>_<def>_<relation>_<src>.dat`):
+  - `0:M0[Msun/h]`: Descendant halo mass
+  - `1..N:c(z)`: Continuous concentration evolution $c(z)$ evaluated from $z=0$ to high redshift along the progenitor branch
+
+- **Task 3: Bayesian Reconstructed MAHs** (`reconstructed_mah_<cosmo>_<def>_<relation>.dat`):
+  - `0:M_obs[Msun/h]`, `1:c_obs`, `2:z_obs`: Observed input parameters
+  - `3:omega_f_MAP`: Bayesian MAP estimated formation parameter
+  - `4:z_f_MAP`: Bayesian MAP inferred half-mass formation redshift
+  - `5:M0_MAP[Msun/h]`: Descendant $z=0$ mass
+  - `6..N:M(z)/M_obs`: Reconstructed past MAH growth trajectory $M(z)/M_{\rm obs}$ into the past
+
+---
+
+## Supported Cosmological Models
+
+Configurations defined in `cosmology_params.py`:
+- `planck18`, `planck15`, `planck13`
+- `WMAP1`, `WMAP3`, `WMAP5`, `WMAP7`, `WMAP9`
+- `illustris`, `bolshoi`, `multidark-planck`, `millennium`
+- `SCDM` (Einstein--de Sitter), `OCDM` (Open CDM), `wCDM` (Dynamical Dark Energy)
+- `LWDM` (Warm Dark Matter with thermal relic masses, e.g. $m_{\rm WDM} = 1.5\,\mathrm{keV}$)
+- `scale-free` (Power-law spectra with $n = -2$)
+
+---
+
+## Citations
+
+If you use this code package in your research, please cite the corresponding papers:
+
+```bibtex
+@ARTICLE{2026ApJ..1006...61W,
+       author = {{Wang}, Dao-Zhou and {Lin}, Weipeng and {Luan}, Tian-Cheng},
+        title = "{Universal Fitting Formulae for the Peak Concentration of Dark Matter Halos}",
+      journal = {\apj},
+     keywords = {Cosmology, Dark matter, Dark matter halos, N-body simulations},
+         year = 2026,
+       volume = {1006},
+       number = {1},
+          eid = {61},
+        pages = {61},
+          doi = {10.3847/1538-4357/ae81a2}
+}
+
+@ARTICLE{2026arXiv261117676W,
+       author = {{Wang}, Dao-Zhou and {Lin}, Weipeng and {Zhu}, Weishan and {Luan}, Tian-Cheng},
+        title = "{Predicting Individual Dark Matter Halo Concentrations from Their Assembly Histories}",
+      journal = {arXiv e-prints},
+     keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics},
+         year = 2026,
+        month = nov,
+          eid = {arXiv:2611.17676},
+        pages = {arXiv:2611.17676},
+archivePrefix = {arXiv},
+       eprint = {2611.17676}
+}
+
+@ARTICLE{PaperIII,
+       author = {{Wang}, Dao-Zhou and {Lin}, Weipeng and {Zhu}, Weishan and {Luan}, Tian-Cheng},
+        title = "{A Universal Model for the Mass Accretion Histories of Dark Matter Halos}",
+      journal = {AAS Journals, submitted},
+         year = 2026
+}
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
