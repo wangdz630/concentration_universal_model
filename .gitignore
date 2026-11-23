@@ -1,7 +1,6 @@
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
 .DS_Store
-output_halo_properties/
-output_individual_halo_properties/
-output_mah_properties/
+
