@@ -1,0 +1,14 @@
+# Example input for Bayesian MAH reconstruction (mah_model.py reconstruct)
+# Columns: M_obs[Msun/h]  c_obs  z_obs  sigma_log10_c_obs
+#   - z_obs and sigma_log10_c_obs are optional (defaults: --z value and 0)
+#   - c_obs must use the same halo definition as --halo-def (vir or 200c)
+# NOTE: the values below are illustrative only (not measurements quoted in the papers).
+7.060000e+14  8.8600  0.0780  0.0800
+7.580000e+14  6.1600  0.0630  0.0800
+1.160000e+15  5.1500  0.0880  0.0800
+1.040000e+15  5.6000  0.1880  0.0800
+1.000000e+15  5.2000  0.4390  0.0800
+1.350000e+15  4.7000  0.4510  0.0800
+1.250000e+13  7.4500  0.0000  0.0000
+1.000000e+12 11.2000  0.0000  0.0000
+1.500000e+11 14.8000  0.0000  0.0000
