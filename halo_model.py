@@ -72,10 +72,16 @@ INDIVIDUAL_PARAMS = {
     }
 }
 
-# Generalized Gamma PDF parameters for omega_f (Paper II Eq. 6)
+# Generalized Gamma PDF parameters for omega_f (Paper II Eq. 6 & Paper III)
 OMEGA_F_PDF_PARAMS = {
-    'CDM':  {'omega_0': 1.25, 'k': 2.14, 'p': 2.04},
-    'LWDM': {'omega_0': 1.21, 'k': 1.82, 'p': 2.70}
+    'vir': {
+        'CDM':  {'omega_0': 1.25, 'k': 2.14, 'p': 2.04},
+        'LWDM': {'omega_0': 1.21, 'k': 1.82, 'p': 2.70}
+    },
+    '200c': {
+        'CDM':  {'omega_0': 1.29, 'k': 2.00, 'p': 2.17},
+        'LWDM': {'omega_0': 1.27, 'k': 1.68, 'p': 3.01}
+    }
 }
 
 # =========================================================
@@ -133,12 +139,13 @@ def compute_omega_f(D_z, D_zf, sigma_M, sigma_M_f, delta_c=1.686):
     omega_f = delta_c * (1.0 / D_zf - 1.0 / D_z) / Delta_S
     return np.maximum(omega_f, 0.0)
 
-def sample_omega_f_sim(size, cosmology_type='CDM', rng=None):
-    """Sample omega_f from the generalized gamma PDF P(omega_f) (Paper II Eq. 6)."""
+def sample_omega_f_sim(size, cosmology_type='CDM', halo_def='vir', rng=None):
+    """Sample omega_f from the generalized gamma PDF P(omega_f) (Paper II Eq. 6 & Paper III)."""
     if rng is None:
         rng = np.random.default_rng(42)
     key = 'LWDM' if cosmology_type == 'LWDM' else 'CDM'
-    p_pdf = OMEGA_F_PDF_PARAMS[key]
+    hdef = halo_def if halo_def in OMEGA_F_PDF_PARAMS else 'vir'
+    p_pdf = OMEGA_F_PDF_PARAMS[hdef][key]
     w0, k, p = p_pdf['omega_0'], p_pdf['k'], p_pdf['p']
     u = rng.gamma(shape=(k + 1.0) / p, scale=1.0, size=size)
     return w0 * ((p / k) * u) ** (1.0 / p)
@@ -214,7 +221,7 @@ def process_halo_data(input_file, cosmology_name, redshift, halo_def, relation):
             omega_f_sim = compute_omega_f(D_z, D_zf_sim, sigma_M, sigma_M_f)
         # Case B: User provided only 1 column (Mass) -> Monte Carlo sample from P(omega_f)
         else:
-            omega_f_sim = sample_omega_f_sim(n_halos, cosmology_type=cosmo_type, rng=rng)
+            omega_f_sim = sample_omega_f_sim(n_halos, cosmology_type=cosmo_type, halo_def=halo_def, rng=rng)
             D_zf_sim = D_zf_eps_func(D_z, sigma_M, sigma_M_f, omega_f=omega_f_sim)
 
         omega_f_eps = sample_omega_f_eps(n_halos, rng=rng)

@@ -51,24 +51,24 @@ MAH_PARAMS = {
     '200c': {'omega_f_peak': {'CDM': 1.29, 'LWDM': 1.27}, 'a': 3.06},
 }
 
-# Generalized Gamma PDF parameters for omega_f (Paper II Eq. 6) across vir and 200c
+# Generalized Gamma PDF parameters for omega_f (Paper II Eq. 6 & Paper III) across vir and 200c
 OMEGA_F_PDF_PARAMS = {
     'vir': {
         'CDM':  {'omega_0': 1.25, 'k': 2.14, 'p': 2.04},
         'LWDM': {'omega_0': 1.21, 'k': 1.82, 'p': 2.70}
     },
     '200c': {
-        'CDM':  {'omega_0': 1.29, 'k': 2.14, 'p': 2.04},
-        'LWDM': {'omega_0': 1.27, 'k': 1.82, 'p': 2.70}
+        'CDM':  {'omega_0': 1.29, 'k': 2.00, 'p': 2.17},
+        'LWDM': {'omega_0': 1.27, 'k': 1.68, 'p': 3.01}
     }
 }
 
 # Gaussian prior on u = log10(1 + omega_f) for Bayesian MAP inversion (Paper III Eq. 13)
-# Under vir: mode=1.25, median=1.33 -> mu=log10(1+1.33)=0.368, sigma=0.094
-# Under 200c: mode=1.29, median=1.37 -> mu=log10(1+1.37)=0.375, sigma=0.094
+# Under vir: mode=1.25, median=1.35 -> mu=log10(1+1.35)=0.370 (approx 0.368), sigma=0.094
+# Under 200c: mode=1.29, median=1.38 -> mu=log10(1+1.38)=0.377, sigma=0.094
 BAYES_PRIOR = {
     'vir':  {'mu': 0.368, 'sigma': 0.094},
-    '200c': {'mu': 0.375, 'sigma': 0.094},
+    '200c': {'mu': 0.377, 'sigma': 0.094},
 }
 
 DEFAULT_Z_OUTPUTS = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
